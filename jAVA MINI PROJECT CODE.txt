@@ -7,6 +7,12 @@ class InsufficientBalanceException extends Exception {
     }
 }
 
+class UserAlreadyExistsException extends Exception {
+    public UserAlreadyExistsException(String message) {
+        super(message);
+    }
+}
+
 public class ATMTransactionSystem {
 
     private int[] accountNumbers;
@@ -18,7 +24,7 @@ public class ATMTransactionSystem {
     public ATMTransactionSystem(Scanner scanner) {
         System.out.print("Enter the number of users you want to create: ");
         int userCount = scanner.nextInt();
-        scanner.nextLine();  // Consume newline left-over
+        scanner.nextLine(); // Consume newline left-over
 
         // Initialize arrays based on the number of users
         accountNumbers = new int[userCount];
@@ -31,9 +37,26 @@ public class ATMTransactionSystem {
         for (int i = 0; i < userCount; i++) {
             System.out.println("\nEnter details for User " + (i + 1) + ":");
 
-            System.out.print("Account Number: ");
-            accountNumbers[i] = scanner.nextInt();
-            scanner.nextLine();  // Consume newline left-over
+            // Account Number validation
+            while (true) {
+                try {
+                    System.out.print("Account Number (10 digits max): ");
+                    String accountInput = scanner.next(); // Read as a String to validate length easily
+                    if (accountInput.length() > 10) {
+                        throw new IllegalArgumentException("Account number cannot exceed 10 digits. Please try again.");
+                    }
+                    int accountNumber = Integer.parseInt(accountInput); // Convert to int after validation
+                    if (isAccountNumberExists(accountNumber)) {
+                        throw new UserAlreadyExistsException("Account number already exists. Please enter a unique account number.");
+                    }
+                    accountNumbers[i] = accountNumber;
+                    break;
+                } catch (IllegalArgumentException e) {
+                    System.out.println(e.getMessage());
+                } catch (UserAlreadyExistsException e) {
+                    System.out.println(e.getMessage());
+                }
+            }
 
             // Phone Number validation
             while (true) {
@@ -47,8 +70,8 @@ public class ATMTransactionSystem {
             }
 
             System.out.print("Name: ");
-            scanner.nextLine();  // Consume newline left-over
-            names[i] = scanner.nextLine();  // Capture full name
+            scanner.nextLine(); // Consume newline left-over
+            names[i] = scanner.nextLine(); // Capture full name
 
             // Date of Birth validation
             while (true) {
@@ -66,6 +89,16 @@ public class ATMTransactionSystem {
 
             System.out.println("User " + (i + 1) + " created successfully.");
         }
+    }
+
+    // Method to check if account number already exists
+    private boolean isAccountNumberExists(int accountNumber) {
+        for (int existingAccount : accountNumbers) {
+            if (existingAccount == accountNumber) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private int findUserByAccountOrPhone(String input) {
@@ -130,7 +163,7 @@ public class ATMTransactionSystem {
             System.out.println("\nOptions: \n1. Deposit\n2. Withdraw\n3. Show Balance\n4. Interest Comparison\n5. Exit");
             System.out.print("Choose an option: ");
             int choice = scanner.nextInt();
-            scanner.nextLine();  // Consume newline left-over
+            scanner.nextLine(); // Consume newline left-over
 
             switch (choice) {
                 case 1:
