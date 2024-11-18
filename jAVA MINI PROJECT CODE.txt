@@ -1,0 +1,169 @@
+import java.util.Scanner;
+import java.util.regex.Pattern;
+
+class InsufficientBalanceException extends Exception {
+    public InsufficientBalanceException(String message) {
+        super(message);
+    }
+}
+
+public class ATMTransactionSystem {
+
+    private int[] accountNumbers;
+    private String[] phoneNumbers;
+    private String[] names;
+    private String[] dob;
+    private double[] balances;
+
+    public ATMTransactionSystem(Scanner scanner) {
+        System.out.print("Enter the number of users you want to create: ");
+        int userCount = scanner.nextInt();
+        scanner.nextLine();  // Consume newline left-over
+
+        // Initialize arrays based on the number of users
+        accountNumbers = new int[userCount];
+        phoneNumbers = new String[userCount];
+        names = new String[userCount];
+        dob = new String[userCount];
+        balances = new double[userCount];
+
+        // Input details for each user
+        for (int i = 0; i < userCount; i++) {
+            System.out.println("\nEnter details for User " + (i + 1) + ":");
+
+            System.out.print("Account Number: ");
+            accountNumbers[i] = scanner.nextInt();
+            scanner.nextLine();  // Consume newline left-over
+
+            // Phone Number validation
+            while (true) {
+                System.out.print("Phone Number (10 digits): ");
+                phoneNumbers[i] = scanner.next();
+                if (phoneNumbers[i].length() == 10 && phoneNumbers[i].matches("\\d+")) {
+                    break;
+                } else {
+                    System.out.println("Incorrect phone number. Please enter a 10-digit phone number.");
+                }
+            }
+
+            System.out.print("Name: ");
+            scanner.nextLine();  // Consume newline left-over
+            names[i] = scanner.nextLine();  // Capture full name
+
+            // Date of Birth validation
+            while (true) {
+                System.out.print("Date of Birth (YYYY-MM-DD): ");
+                dob[i] = scanner.next();
+                if (Pattern.matches("\\d{4}-\\d{2}-\\d{2}", dob[i])) {
+                    break;
+                } else {
+                    System.out.println("Incorrect DOB or incorrect format. Please enter DOB in YYYY-MM-DD format.");
+                }
+            }
+
+            System.out.print("Initial Balance: ");
+            balances[i] = scanner.nextDouble();
+
+            System.out.println("User " + (i + 1) + " created successfully.");
+        }
+    }
+
+    private int findUserByAccountOrPhone(String input) {
+        for (int i = 0; i < accountNumbers.length; i++) {
+            if (input.equals(String.valueOf(accountNumbers[i])) || input.equals(phoneNumbers[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public void deposit(int index, double amount) {
+        if (amount > 0) {
+            balances[index] += amount;
+            System.out.println("Deposit successful. New balance: $" + balances[index]);
+        } else {
+            System.out.println("Invalid amount. Deposit failed.");
+        }
+    }
+
+    public void withdraw(int index, double amount) throws InsufficientBalanceException {
+        if (amount > balances[index]) {
+            throw new InsufficientBalanceException("Insufficient balance for withdrawal.");
+        }
+        balances[index] -= amount;
+        System.out.println("Withdrawal successful. New balance: $" + balances[index]);
+    }
+
+    public double checkBalance(int index) {
+        return balances[index];
+    }
+
+    public void displayInterestComparison(double principal, int time) {
+        double rate1 = 3.5;
+        double rate2 = 4.0;
+        double rate3 = 4.5;
+
+        double interest1 = (principal * rate1 * time) / 100;
+        double interest2 = (principal * rate2 * time) / 100;
+        double interest3 = (principal * rate3 * time) / 100;
+
+        System.out.println("Bank 1 Interest: $" + interest1);
+        System.out.println("Bank 2 Interest: $" + interest2);
+        System.out.println("Bank 3 Interest: $" + interest3);
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        ATMTransactionSystem atmSystem = new ATMTransactionSystem(scanner);
+
+        System.out.println("\nEnter your account number or phone number:");
+        String input = scanner.next();
+        int index = atmSystem.findUserByAccountOrPhone(input);
+
+        if (index == -1) {
+            System.out.println("User not found.");
+            scanner.close();
+            return;
+        }
+
+        while (true) {
+            System.out.println("\nOptions: \n1. Deposit\n2. Withdraw\n3. Show Balance\n4. Interest Comparison\n5. Exit");
+            System.out.print("Choose an option: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine();  // Consume newline left-over
+
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter deposit amount: ");
+                    double depositAmount = scanner.nextDouble();
+                    atmSystem.deposit(index, depositAmount);
+                    break;
+                case 2:
+                    System.out.print("Enter withdrawal amount: ");
+                    double withdrawalAmount = scanner.nextDouble();
+                    try {
+                        atmSystem.withdraw(index, withdrawalAmount);
+                    } catch (InsufficientBalanceException e) {
+                        System.out.println(e.getMessage());
+                    }
+                    break;
+                case 3:
+                    System.out.println("Current balance: $" + atmSystem.checkBalance(index));
+                    break;
+                case 4:
+                    System.out.print("Enter principal amount for interest calculation: ");
+                    double principal = scanner.nextDouble();
+                    System.out.print("Enter time in years: ");
+                    int time = scanner.nextInt();
+                    atmSystem.displayInterestComparison(principal, time);
+                    break;
+                case 5:
+                    System.out.println("Exiting system. Thank you!");
+                    scanner.close();
+                    return;
+                default:
+                    System.out.println("Invalid option. Try again.");
+            }
+        }
+    }
+}
